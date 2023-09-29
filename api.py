@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import os
-from pprint import pprint
 import requests
+from vacancy import Vacancy
 
 
 API_hh = "https://api.hh.ru/vacancies"
@@ -19,7 +19,8 @@ class APIVacancy(ABC):
     @abstractmethod
     def format_vacancies(self) -> dict:
         """Приводит полученные по API данные к единому формату:
-        {'title': 'вакансия', 'url': 'ссылка на вакансию', 'salary min': 'минимальная зарплата', 'salary max': 'максимальная зарплата', 'requirement': 'основные требования'}"""
+        {'title': 'вакансия', 'url': 'ссылка на вакансию', 'salary_min': 'минимальная зарплата',
+        'salary_max': 'максимальная зарплата', 'requirement': 'основные требования'}"""
         pass
 
 
@@ -41,36 +42,38 @@ class HHAPI(APIVacancy):
 
     def format_vacancies(self):
         """Приводит полученные по API данные к единому формату:
-        {'title': 'вакансия', 'url': 'ссылка на вакансию', 'salary min': 'минимальная зарплата', 'salary max': 'максимальная зарплата', 'requirement': 'основные требования'}"""
-        vacancies = hh_api.get_vacancies()
+        {'title': 'вакансия', 'url': 'ссылка на вакансию', 'salary_min': 'минимальная зарплата',
+        'salary_max': 'максимальная зарплата', 'requirement': 'основные требования'}"""
+        vacancies = self.get_vacancies()
         new_json = []
         for i in vacancies['items']:
             try:
-                d = {
-                'title': i['name'],
-                'url': i['url'],
-                'salary min': i['salary']['from'],
-                'salary max': i['salary']['to'],
-                'requirement': i['snippet']['requirement']
+                filtered_vacancies = {
+                  'title': i['name'],
+                  'url': i['url'],
+                  'salary_min': i['salary']['from'],
+                  'salary_max': i['salary']['to'],
+                  'requirement': i['snippet']['requirement']
                 }
-            except(TypeError,IndexError, ValueError, KeyError):
-                d = {
+            except(TypeError, IndexError, ValueError, KeyError):
+                filtered_vacancies = {
                     'title': i['name'],
                     'url': i['url'],
-                    'salary min': 0,
-                    'salary max': 0,
+                    'salary_min': 0,
+                    'salary_max': 0,
                     'requirement': i['snippet']['requirement']
                 }
             else:
                 if not i['salary']['from'] or not i['salary']['to']:
-                    d = {
+                    filtered_vacancies = {
                         'title': i['name'],
                         'url': i['url'],
-                        'salary min': 0,
-                        'salary max': 0,
+                        'salary_min': 0,
+                        'salary_max': 0,
                         'requirement': i['snippet']['requirement']
                     }
-            new_json.append(d)
+            vac = Vacancy(**filtered_vacancies)
+            new_json.append(vac)
         return new_json
 
 
@@ -93,35 +96,36 @@ class SuperJobAPI(APIVacancy):
 
     def format_vacancies(self):
         """Приводит полученные по API данные к единому формату:
-        {'title': 'вакансия', 'url': 'ссылка на вакансию', 'salary min': 'минимальная зарплата', 'salary max': 'максимальная зарплата', 'requirement': 'основные требования'}"""
-        vacancies = sj_api.get_vacancies()
+        {'title': 'вакансия', 'url': 'ссылка на вакансию', 'salary_min': 'минимальная зарплата',
+        'salary_max': 'максимальная зарплата', 'requirement': 'основные требования'}"""
+        vacancies = self.get_vacancies()
         new_json = []
         for i in vacancies['objects']:
             try:
-                d = {
-                'title': i['profession'],
-                'url': i['link'],
-                'salary min': i['payment_from'],
-                'salary max': i['payment_to'],
-                'requirement': i['candidat']
+                filtered_vacancies = {
+                  'title': i['profession'],
+                  'url': i['link'],
+                  'salary_min': i['payment_from'],
+                  'salary_max': i['payment_to'],
+                  'requirement': i['candidat']
                 }
             except(TypeError, IndexError, ValueError, KeyError):
-                d = {
+                filtered_vacancies = {
                     'title': i['profession'],
                     'url': i['link'],
-                    'salary min': 0,
-                    'salary max': 0,
+                    'salary_min': 0,
+                    'salary_max': 0,
                     'requirement': i['candidat']
                 }
             else:
                 if not i['payment_from'] or not i['payment_to']:
-                    d = {
+                    filtered_vacancies = {
                         'title': i['profession'],
                         'url': i['link'],
-                        'salary min': 0,
-                        'salary max': 0,
+                        'salary_min': 0,
+                        'salary_max': 0,
                         'requirement': i['candidat']
                     }
-            new_json.append(d)
+            vac = Vacancy(**filtered_vacancies)
+            new_json.append(vac)
         return new_json
-
